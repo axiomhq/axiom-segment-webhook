@@ -26,7 +26,7 @@ func run(ctx context.Context, log *zap.Logger, client *axiom.Client) error {
 
 	flag.Parse()
 
-	wh, err := webhook.NewWebhook(client)
+	wh, err := webhook.NewWebhook(ctx, log, client)
 	if err != nil {
 		return cmd.Error("create webhook", err)
 	}

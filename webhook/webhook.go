@@ -1,12 +1,11 @@
 package webhook
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
-	"reflect"
 	"time"
 
 	"github.com/axiomhq/axiom-go/axiom"
@@ -14,83 +13,72 @@ import (
 )
 
 var (
-	logger           *zap.Logger
-	timestampField   = "timestamp"
-	datasetName      = "axiom_segement_webhook"
-	alreadyExistsErr = fmt.Errorf("API error 409: entity exists: entity exists")
+	timestampField = "timestamp"
+	datasetName    = "axiom_segement_webhook"
 )
 
-func init() {
-	var err error
-	logger, err = zap.NewProduction()
-	if err != nil {
-		panic(err)
-	}
-
-	// type check on axiom.Event incase it's ever not a map[string]interface{}
-	// so we can use unsafe.Pointer for a quick type conversion instead of allocating a new slice
-	if !reflect.TypeOf(axiom.Event{}).ConvertibleTo(reflect.TypeOf(map[string]interface{}{})) {
-		panic("axiom.Event is not a map[string]interface{}, please contact support")
-	}
-}
-
+// Webhook handles a segments.io webhook payload.
 type Webhook struct {
+	logger *zap.Logger
 	client *axiom.Client
 }
 
-func NewWebhook(client *axiom.Client) (*Webhook, error) {
-	axiomReq := axiom.DatasetCreateRequest{
+// NewWebhook creates a new Webhook.
+func NewWebhook(ctx context.Context, logger *zap.Logger, client *axiom.Client) (*Webhook, error) {
+	if _, err := client.Datasets.Create(ctx, axiom.DatasetCreateRequest{
 		Name:        datasetName,
 		Description: "Segment events",
-	}
-	_, err := client.Datasets.Create(context.Background(), axiomReq)
-	if err != nil && err.Error() != alreadyExistsErr.Error() {
-		return nil, err
+	}); err != nil && !errors.Is(err, axiom.ErrExists) {
+		return nil, fmt.Errorf("create dataset %q: %w", datasetName, err)
 	}
 
 	return &Webhook{
+		logger: logger,
 		client: client,
 	}, nil
 }
 
-func (m *Webhook) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
-	if req.Method != "POST" {
+func (w *Webhook) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
+	if req.Method != http.MethodPost {
 		return
 	}
 
-	if err := m.sendEvent(req); err != nil {
-		logger.Error(err.Error())
+	if err := w.sendEvent(req); err != nil {
+		w.logger.Error(err.Error())
 	}
 }
 
-func (m *Webhook) sendEvent(req *http.Request) error {
-	opts := axiom.IngestOptions{
-		TimestampField:  timestampField,
-		TimestampFormat: time.RFC3339,
-	}
-
+func (w *Webhook) sendEvent(req *http.Request) error {
 	var event axiom.Event
 	if err := json.NewDecoder(req.Body).Decode(&event); err != nil {
 		return err
 	}
 
-	status, err := m.client.Datasets.IngestEvents(
-		context.Background(),
-		datasetName,
-		opts,
-		event,
-	)
+	opts := axiom.IngestOptions{
+		TimestampField:  timestampField,
+		TimestampFormat: time.RFC3339,
+	}
 
+	status, err := w.client.Datasets.IngestEvents(req.Context(), datasetName, opts, event)
 	if err != nil {
-		logger.Error("error ingesting event", zap.Error(err))
+		w.logger.Error("error ingesting event", zap.Error(err))
 		return err
 	}
 
-	buf := bytes.NewBuffer(nil)
-	if err := json.NewEncoder(buf).Encode(status); err != nil {
-		return err
+	w.logger.Info("ingested successfully",
+		zap.Uint64("ingested", status.Ingested),
+		zap.Uint64("failed", status.Failed),
+		zap.Uint64("processed_bytes", status.ProcessedBytes),
+		zap.Uint32("blocks_created", status.BlocksCreated),
+		zap.Uint32("wal_length", status.WALLength),
+	)
+	for k, v := range status.Failures {
+		w.logger.Warn("failed to ingest event",
+			zap.Int("id", k+1),
+			zap.Time("timestamp", v.Timestamp),
+			zap.String("error", v.Error),
+		)
 	}
 
-	logger.Info(buf.String())
 	return nil
 }
