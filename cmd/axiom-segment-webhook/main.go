@@ -9,13 +9,13 @@ import (
 	"github.com/axiomhq/pkg/http"
 	"go.uber.org/zap"
 
-	"github.com/axiomhq/axiom-segement-webhook/webhook"
+	"github.com/axiomhq/axiom-segment-webhook/webhook"
 )
 
 var addr = flag.String("addr", ":8080", "Listen address <ip>:<port>")
 
 func main() {
-	cmd.Run("axiom-segement-webhook", run,
+	cmd.Run("axiom-segment-webhook", run,
 		cmd.WithValidateAxiomCredentials(),
 	)
 }

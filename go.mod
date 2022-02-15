@@ -1,4 +1,4 @@
-module github.com/axiomhq/axiom-segement-webhook
+module github.com/axiomhq/axiom-segment-webhook
 
 go 1.17
 

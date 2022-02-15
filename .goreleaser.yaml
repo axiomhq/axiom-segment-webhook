@@ -117,7 +117,7 @@ release:
     owner: axiomhq
     name: axiom-segment-webhook
   prerelease: auto
-  name_template: "Axiom Segement.io Webhook v{{ .Version }}"
+  name_template: "Axiom Segment.io Webhook v{{ .Version }}"
 
 brews:
   - name: axiom-segment-webhook

@@ -8,13 +8,13 @@ RUN apk update --no-cache                 \
     && apk add --no-cache ca-certificates
 
 # Copy binary into image.
-COPY axiom-segement-webhook /usr/bin/axiom-segement-webhook
+COPY axiom-segment-webhook /usr/bin/axiom-segment-webhook
 
 # Use the project name as working directory.
-WORKDIR /axiom-segement-webhook
+WORKDIR /axiom-segment-webhook
 
 # Expose the default application port.
 EXPOSE 8080/tcp
 
 # Set the binary as entrypoint.
-ENTRYPOINT [ "/usr/bin/axiom-segement-webhook" ]
+ENTRYPOINT [ "/usr/bin/axiom-segment-webhook" ]
