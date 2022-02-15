@@ -18,10 +18,10 @@
 
 ## Introduction
 
-_Axiom Segment Webhook_ provides a [Segement][1] compatible webhook that sends
+_Axiom Segment Webhook_ provides a [Segment][1] compatible webhook that sends
 data to Axiom.
 
-  [1]: segement.io
+  [1]: segment.io
 
 ## Installation
 

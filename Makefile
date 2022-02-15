@@ -100,7 +100,7 @@ fmt: ## Format and simplify the source code using `gofmt`
 	@! $(GOFMT) -s -w $(shell find . -path -prune -o -name '*.go' -print) | grep '^'
 
 .PHONY: install
-install: $(GOPATH)/bin/axiom-segement-webhook ## Install the binary into the $GOPATH/bin directory
+install: $(GOPATH)/bin/axiom-segment-webhook ## Install the binary into the $GOPATH/bin directory
 
 .PHONY: lint
 lint: $(GOLANGCI_LINT) ## Lint the source code
@@ -126,9 +126,9 @@ $(COVERPROFILE):
 
 # INSTALL TARGETS
 
-$(GOPATH)/bin/axiom-segement-webhook: dep.stamp $(call go-pkg-sourcefiles, ./...)
-	@echo ">> installing axiom-segement-webhook binary"
-	@$(GO_BIN_IN_PATH) install $(GOFLAGS) ./cmd/axiom-segement-webhook
+$(GOPATH)/bin/axiom-segment-webhook: dep.stamp $(call go-pkg-sourcefiles, ./...)
+	@echo ">> installing axiom-segment-webhook binary"
+	@$(GO_BIN_IN_PATH) install $(GOFLAGS) ./cmd/axiom-segment-webhook
 
 # GO TOOLS
 

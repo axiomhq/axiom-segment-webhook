@@ -14,7 +14,7 @@ import (
 
 var (
 	timestampField = "timestamp"
-	datasetName    = "axiom_segement_webhook"
+	datasetName    = "axiom_segment_webhook"
 )
 
 // Webhook handles a segments.io webhook payload.

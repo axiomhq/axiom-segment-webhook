@@ -1,6 +1,6 @@
 //go:build tools
 
-package axiomsegementwebhook
+package axiomsegmentwebhook
 
 import (
 	_ "github.com/golangci/golangci-lint/cmd/golangci-lint"
