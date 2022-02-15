@@ -1,31 +1,31 @@
 # TOOLCHAIN
-GO				:= CGO_ENABLED=0 GOBIN=$(CURDIR)/bin go
-GO_BIN_IN_PATH  := CGO_ENABLED=0 go
-GOFMT			:= $(GO)fmt
+GO			   := CGO_ENABLED=0 GOBIN=$(CURDIR)/bin go
+GO_BIN_IN_PATH := CGO_ENABLED=0 go
+GOFMT		   := $(GO)fmt
 
 # ENVIRONMENT
-VERBOSE	=
+VERBOSE =
 GOPATH	:= $(GOPATH)
 
 # APPLICATION INFORMATION
-BUILD_DATE	:= $(shell date -u '+%Y-%m-%dT%H:%M:%SZ')
-REVISION	:= $(shell git rev-parse --short HEAD)
-RELEASE		:= $(shell git describe --tags 2>/dev/null || git rev-parse --short HEAD)-dev
-USER		:= $(shell whoami)
+BUILD_DATE := $(shell date -u '+%Y-%m-%dT%H:%M:%SZ')
+REVISION   := $(shell git rev-parse --short HEAD)
+RELEASE	   := $(shell git describe --tags 2>/dev/null || git rev-parse --short HEAD)-dev
+USER	   := $(shell whoami)
 
 # GO TOOLS
-GOLANGCI_LINT	:= bin/golangci-lint
-GORELEASER		:= bin/goreleaser
-GOTESTSUM		:= bin/gotestsum
+GOLANGCI_LINT := bin/golangci-lint
+GORELEASER	  := bin/goreleaser
+GOTESTSUM	  := bin/gotestsum
 
 GOTOOLS := $(shell cat tools.go | grep "_ \"" | awk '{ print $$2 }' | tr -d '"')
 
 # MISC
-COVERPROFILE	:= coverage.out
-DIST_DIR	:= dist
+COVERPROFILE := coverage.out
+DIST_DIR	 := dist
 
 # TAGS
-GOTAGS	:= osusergo netgo static_build
+GOTAGS := osusergo netgo static_build
 
 # FLAGS
 GOFLAGS := -buildmode=pie -tags='$(GOTAGS)' -installsuffix=cgo -trimpath
@@ -35,14 +35,14 @@ GOFLAGS += -X github.com/axiomhq/pkg/version.revision=$(REVISION)
 GOFLAGS += -X github.com/axiomhq/pkg/version.buildDate=$(BUILD_DATE)
 GOFLAGS += -X github.com/axiomhq/pkg/version.buildUser=$(USER)'
 
-GO_TEST_FLAGS		:= -race -coverprofile=$(COVERPROFILE)
-GORELEASER_FLAGS	:= --snapshot --rm-dist
+GO_TEST_FLAGS	 := -race -coverprofile=$(COVERPROFILE)
+GORELEASER_FLAGS := --snapshot --rm-dist
 
 # DEPENDENCIES
 GOMODDEPS = go.mod go.sum
 
 # Enable verbose test output if explicitly set.
-GOTESTSUM_FLAGS	=
+GOTESTSUM_FLAGS =
 ifdef VERBOSE
 	GOTESTSUM_FLAGS += --format=standard-verbose
 endif
