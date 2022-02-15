@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"strings"
 
 	"github.com/axiomhq/axiom-go/axiom"
 	"github.com/axiomhq/pkg/cmd"
@@ -13,10 +12,7 @@ import (
 	"github.com/axiomhq/axiom-segement-webhook/webhook"
 )
 
-var (
-	addr     = flag.String("addr", ":8080", "Listen address <ip>:<port>")
-	typesStr = flag.String("types", "page,screen,identify,track,alias,group", "comma separated list of types to listen for")
-)
+var addr = flag.String("addr", ":8080", "Listen address <ip>:<port>")
 
 func main() {
 	cmd.Run("axiom-segement-webhook", run,
@@ -30,9 +26,7 @@ func run(ctx context.Context, log *zap.Logger, client *axiom.Client) error {
 
 	flag.Parse()
 
-	types := strings.Split(*typesStr, ",")
-
-	wh, err := webhook.NewWebhook(client, types)
+	wh, err := webhook.NewWebhook(client)
 	if err != nil {
 		return cmd.Error("create webhook", err)
 	}

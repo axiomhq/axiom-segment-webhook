@@ -14,17 +14,10 @@ import (
 )
 
 var (
-	logger         *zap.Logger
-	timestampField = "timestamp"
-	datasetPrefix  = "segement-io-%s"
-	segmentMethods = map[string]struct{}{
-		"page":     {},
-		"screen":   {},
-		"identify": {},
-		"track":    {},
-		"alias":    {},
-		"group":    {},
-	}
+	logger           *zap.Logger
+	timestampField   = "timestamp"
+	datasetName      = "axiom_segement_webhook"
+	alreadyExistsErr = fmt.Errorf("API error 409: entity exists: entity exists")
 )
 
 func init() {
@@ -45,20 +38,16 @@ type Webhook struct {
 	client *axiom.Client
 }
 
-func NewWebhook(client *axiom.Client, types []string) (*Webhook, error) {
-	for _, typ := range types {
-		if _, ok := segmentMethods[typ]; !ok {
-			return nil, fmt.Errorf("unknown type: %s", typ)
-		}
+func NewWebhook(client *axiom.Client) (*Webhook, error) {
+	axiomReq := axiom.DatasetCreateRequest{
+		Name:        datasetName,
+		Description: "Segment events",
+	}
+	_, err := client.Datasets.Create(context.Background(), axiomReq)
+	if err != nil && err.Error() != alreadyExistsErr.Error() {
+		return nil, err
 	}
 
-	for _, typ := range types {
-		axiomReq := axiom.DatasetCreateRequest{
-			Name:        fmt.Sprintf(datasetPrefix, typ),
-			Description: fmt.Sprintf("Segment %s events ", typ),
-		}
-		client.Datasets.Create(context.Background(), axiomReq)
-	}
 	return &Webhook{
 		client: client,
 	}, nil
@@ -75,27 +64,23 @@ func (m *Webhook) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 }
 
 func (m *Webhook) sendEvent(req *http.Request) error {
-	dec := json.NewDecoder(req.Body)
-	ev := axiom.Event{}
-
-	if err := dec.Decode(&ev); err != nil {
-		return err
-	}
-
-	typ, ok := ev["type"]
-	if !ok {
-		return fmt.Errorf("missing type field")
-	}
-	delete(ev, "type")
-
-	dataset := typ.(string)
-
 	opts := axiom.IngestOptions{
 		TimestampField:  timestampField,
 		TimestampFormat: time.RFC3339,
 	}
 
-	status, err := m.client.Datasets.IngestEvents(req.Context(), fmt.Sprintf(datasetPrefix, dataset), opts, ev)
+	var event axiom.Event
+	if err := json.NewDecoder(req.Body).Decode(&event); err != nil {
+		return err
+	}
+
+	status, err := m.client.Datasets.IngestEvents(
+		context.Background(),
+		datasetName,
+		opts,
+		event,
+	)
+
 	if err != nil {
 		logger.Error("error ingesting event", zap.Error(err))
 		return err
